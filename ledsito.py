@@ -2,14 +2,19 @@ import time
 import grovepi
 
 # Establece los pines a ser conectados
+sound_sensor = 0
 bombillopin = 4     # Simula prender el bonbillo. D4
 buzzer = 8
 relay =  3
 numleds = 1  #Si solo se tiene un 1 LED, cabiar el valor a 1
 # Establecer el modo de lectura y escritura de cada pin
+grovepi.pinMode(sound_sensor,"INPUT")
 grovepi.pinMode(bombillopin,"OUTPUT")
 grovepi.pinMode(buzzer,"OUTPUT")
 grovepi.pinMode(relay,"OUTPUT")
+
+# The threshold to turn the led on 400.00 * 5 / 1024 = 1.95v
+threshold_value = 215
 
 print("inicia programa")
 time.sleep(1)
@@ -59,22 +64,29 @@ time.sleep(.5)
 
 while True:
   try:
-    print("incender bombillo")
-    #grovepi.digitalWrite(bombillopin,1) #Turn LED ON
-    turn_on_led(0,0,255,0)
-    grovepi.digitalWrite(buzzer,1) #Turn Buzzer On
-    grovepi.digitalWrite(relay,1) #Turn Relay on
-    time.sleep(1)
-    print("apagar bombillo")
-    #grovepi.digitalWrite(bombillopin,0)
-    turn_off_led(0)
-    grovepi.digitalWrite(buzzer,0)
-    grovepi.digitalWrite(relay,0)
+     # Read the sound level
+     print("Leyendo sensor de sonido")
+     sensor_value = grovepi.analogRead(sound_sensor)
+    
+     if sensor_value > threshold_value:
+         print("encender alarma")
+         turn_on_led(0,0,255,0) # Turn Led On
+         grovepi.digitalWrite(buzzer,1) #Turn Buzzer On
+         grovepi.digitalWrite(relay,1) #Turn Relay on
+     else:
+    	 print("apagar alarma")
+    	 turn_off_led(0)
+    	 grovepi.digitalWrite(buzzer,0)
+    	 grovepi.digitalWrite(relay,0)
+   
+     print("Lectura de sonido")
+     print(sensor_value)
+     time.sleep(1)
+  
   except KeyboardInterrupt: # Turn LED off before stopping
-       #grovepi.digitalWrite(bombillopin,0)
-       turn_off_led(0)
-       grovepi.digitalWrite(buzzer,0)
-       grovepi.digitalWrite(relay,0)
-       break 
+      turn_off_led(0)
+      grovepi.digitalWrite(buzzer,0)
+      grovepi.digitalWrite(relay,0)
+      break 
   except IOError: # Print "Error" if communication error encountered
-       print ("Error")
+      print ("Error")
