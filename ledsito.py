@@ -38,7 +38,6 @@ threshold_value = 200
 print("inicia programa")
 time.sleep(1)
 
-
 # patterns used in grovepi.chainableRgbLed_pattern()
 thisLedOnly = 0
 allLedsExceptThis = 1
@@ -79,14 +78,13 @@ def httpRequest():
 
 def getData():
     #Estableciendo que variables son Globales
-    global sound 
+    global sound
     global led
-    global relay
-    global buzzer
-    
+    global rel
+    global buzz
     releer = True
-    
-    while releer: 
+
+    while releer:
               try:
                   print("Inicia el sistema")
     		  # Obtener valor sensor de sonido
@@ -97,15 +95,15 @@ def getData():
                   # si el umbral es superado se enciende la alarma
                   if sensor_value > threshold_value:
                      print("encender alarma")
-         	     turn_on_led(0,0,255,0) # Enciende Led 
-         	     grovepi.digitalWrite(buzzer,1) #Activa Buzzer
+         	     turn_on_led(0,0,255,0) # Enciende Lee
+                     grovepi.digitalWrite(buzzer,1) #Activa Buzzer
          	     grovepi.digitalWrite(relay,1) #Activa Relay
 		     #Hace set de los valores del sensor y actuadores para enviarlos a thingSpeak
                      sound = sensor_value
 		     led = 1
-		     relay = 1
-		     buzzer = 1
-                     time.sleep(0,1)
+		     rel = 1
+		     buzz = 1
+                     time.sleep(0.1)
   		  
                   else:
     	 	       print("apagar alarma")
@@ -114,8 +112,8 @@ def getData():
     	 	       grovepi.digitalWrite(relay,0)
 		       sound = sensor_value
 		       led = 0
-                       relay = 0
-		       buzzer = 0
+                       rel = 0
+		       buzz = 0
 
 		       #Terminar bucle correctamente
 	               releer = False 
