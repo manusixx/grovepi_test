@@ -5,6 +5,7 @@ import grovepi
 import urllib2 as ul 
 import json 
 import os
+from paho.mqtt import client as mqtt_client
 
 #Configuracion ThinSpeak
 # Set de variables globales que permiten a los 15 segundos  tomar info y
@@ -18,7 +19,12 @@ channelID = "1413681"
 # ThingSpeak server settings
 url = "https://api.thingspeak.com/channels/"+channelID+"/bulk_update.json"
 messageBuffer = []
-
+#MQTT Server settings
+broker="192.168.1.13"
+port=1883
+#topic ="dispositivo_IOT_Deteccion"
+username = 'pi'
+password = 'mpastrana'
 # Establece los pines a ser conectados
 sound_sensor = 0    # A0
 bombillopin = 4     # D4
@@ -76,6 +82,20 @@ def httpRequest():
     messageBuffer = [] # Reinitialize the message buffer global 
     lastConnectionTime = time.time() # Update the connection time
 
+#Metodo para conectar al servidor MQTT
+def connect_mqtt():
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            print("Connected to MQTT Broker!")
+        else:
+            print("Failed to connect, return code %d\n", rc)
+
+    client = mqtt_client.Client("dispositivo_IOT_Deteccion")
+    client.username_pw_set(username, password)
+    client.on_connect = on_connect
+    client.connect(broker, port)
+    return client
+
 def getData():
     #Estableciendo que variables son Globales
     global sound
@@ -84,6 +104,8 @@ def getData():
     global buzz
     releer = True
 
+    client = connect_mqtt()
+
     while releer:
               try:
                   print("Inicia el sistema")
@@ -91,26 +113,36 @@ def getData():
                   sensor_value = grovepi.analogRead(sound_sensor)
                   print ("Lectura de sensor sonido = ")
                   print (sensor_value)
-
+                  print ("paso1")
+                  client.publish("sensorSonidoSalida",sensor_value)
                   # si el umbral es superado se enciende la alarma
                   if sensor_value > threshold_value:
-                     print("encender alarma")
-         	     turn_on_led(0,0,255,0) # Enciende Lee
+                     print ("encender alarma")
+		     client.publish("sensorSonidoSalida",sensor_value)
+         	     turn_on_led(0,0,255,0) # Enciende Led
+		     client.publish("ledSalida",1)
                      grovepi.digitalWrite(buzzer,1) #Activa Buzzer
+                     client.publish("buzzerSalida",1)
          	     grovepi.digitalWrite(relay,1) #Activa Relay
+		     client.publish("relaySalida",1)
 		     #Hace set de los valores del sensor y actuadores para enviarlos a thingSpeak
                      sound = sensor_value
 		     led = 1
 		     rel = 1
 		     buzz = 1
                      time.sleep(0.1)
-  		  
+
                   else:
     	 	       print("apagar alarma")
+                       client.publish("sensorSonidoSalida",sensor_value)
     	 	       turn_off_led(0)
+		       client.publish("ledSalida",0)
     	 	       grovepi.digitalWrite(buzzer,0)
+		       client.publish("buzzerSalida",0)
     	 	       grovepi.digitalWrite(relay,0)
-		       sound = sensor_value
+		       client.publish("relaySalida",0)
+		       #Valores capturados del sensor y actuadores a enviar a thingSpeak
+                       sound = sensor_value
 		       led = 0
                        rel = 0
 		       buzz = 0
