@@ -8,7 +8,7 @@ import os
 
 #Configuracion ThinSpeak
 # Set de variables globales que permiten a los 15 segundos  tomar info y
-# actualizar el channel cada 2 minutos
+# actualizar el channel cada 15 segundos
 lastConnectionTime = time.time() #  ultima conexion
 lastUpdateTime = time.time() #  ultima actualizacion 
 postingInterval = 15 # Post de actualizacion
