@@ -113,7 +113,6 @@ def getData():
                   sensor_value = grovepi.analogRead(sound_sensor)
                   print ("Lectura de sensor sonido = ")
                   print (sensor_value)
-                  print ("paso1")
                   client.publish("sensorSonidoSalida",sensor_value)
                   # si el umbral es superado se enciende la alarma
                   if sensor_value > threshold_value:
