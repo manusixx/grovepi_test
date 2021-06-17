@@ -121,15 +121,12 @@ def getData():
 
     while releer:
               try:
-                  print("Inicia el sistema")
-    		  # Obtener valor sensor de sonido
+                  #obtener valor sensor de sonido
                   sensor_value = grovepi.analogRead(sound_sensor)
-                  led = 0
-                  rel = 0
-		  buzz = 0
                   print ("Lectura de sensor sonido = ")
                   print (sensor_value)
                   client.publish("sensorSonidoSalida",sensor_value)
+                  
                   # si el umbral es superado se enciende la alarma
                   if sensor_value > threshold_value:
                      print ("encender alarma")
@@ -138,11 +135,11 @@ def getData():
 		     client.publish("ledSalida",1)
                      grovepi.digitalWrite(buzzer,1) #Activa Buzzer
                      time.sleep(0.1)
-                     grovepi.digiralWrite(buzzer,0) #Desactiva el Buzzer
+                     grovepi.digitalWrite(buzzer,0) #Desactiva el Buzzer
                      client.publish("buzzerSalida",1)
          	     grovepi.digitalWrite(relay,1) #Activa Relay
 		     time.sleep(0.1)
-		     grovepi.digiralWrite(relay,0)
+		     grovepi.digitalWrite(relay,0)
 		     client.publish("relaySalida",1)
 		     #Hace set de los valores del sensor y actuadores para enviarlos a thingSpeak
                      sound = sensor_value
@@ -196,7 +193,8 @@ def getData():
               except:  
                      print ("Error en la lectura del sensor... volviendo a leer")
 	             time.sleep(0.5)
-
+    print ("led")
+    print (led)                 
     return sound, led, relay, buzzer
 
 #metodo que actualiza el JSON para enviar la info a ThigSpeak
@@ -209,11 +207,14 @@ def updatesJson():
 	global lastUpdateTime
 	message = {}
 	message['delta_t'] = int(round(time.time() - lastUpdateTime))
-	Sound_Sensor,RGB_Led, Relay, Buzzer = getData()
-	message['field1'] = Sound_Sensor
-	message['field2'] = RGB_Led
-	message['field3'] = Relay
-	message['field4'] = Buzzer
+	sound, led, relay, buzzer = getData()
+        print ("LED")
+        print (led)
+
+	message['field1'] = sound
+	message['field2'] = led
+	message['field3'] = relay
+	message['field4'] = buzzer
 	global messageBuffer
 	messageBuffer.append(message)
         # If posting interval time has crossed 2 minutes update the ThingSpeak channel with your data
