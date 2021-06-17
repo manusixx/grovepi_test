@@ -5,7 +5,13 @@ import grovepi
 import urllib2 as ul 
 import json 
 import os
+import smtplib
+import subprocess
 from paho.mqtt import client as mqtt_client
+# paquete del modulo de  email necesarios
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from subprocess import call
 
 #Configuracion ThinSpeak
 # Set de variables globales que permiten a los 15 segundos  tomar info y
@@ -32,6 +38,13 @@ buzzer = 8          # D8
 relay =  3          # D3
 numleds = 1  #Si solo se tiene un 1 LED, cabiar el valor a 1
 
+#Configuracion de variables para el envio de correo
+SMTP_USERNAME = 'dhrsolutions.sas@gmail.com'  # email que envia
+SMTP_PASSWORD = 'H3yD0c2020'  # Pasword de la cuenta que envia
+SMTP_RECIPIENT = 'alexander15950@gmail.com' # email que recibe
+SMTP_SERVER = 'smtp.gmail.com'  # SMTP
+SSL_PORT = 465 #Puerto para envio de correos
+
 # Establecer el modo de lectura y escritura de cada pin
 grovepi.pinMode(sound_sensor,"INPUT")
 grovepi.pinMode(bombillopin,"OUTPUT")
@@ -39,7 +52,7 @@ grovepi.pinMode(buzzer,"OUTPUT")
 grovepi.pinMode(relay,"OUTPUT")
 
 # El umbral o threshold para encender el led  215.00 * 5 / 1024 = 1.05v
-threshold_value = 200
+threshold_value = 355
 
 print("inicia programa")
 time.sleep(1)
@@ -111,6 +124,9 @@ def getData():
                   print("Inicia el sistema")
     		  # Obtener valor sensor de sonido
                   sensor_value = grovepi.analogRead(sound_sensor)
+                  led = 0
+                  rel = 0
+		  buzz = 0
                   print ("Lectura de sensor sonido = ")
                   print (sensor_value)
                   client.publish("sensorSonidoSalida",sensor_value)
@@ -121,8 +137,12 @@ def getData():
          	     turn_on_led(0,0,255,0) # Enciende Led
 		     client.publish("ledSalida",1)
                      grovepi.digitalWrite(buzzer,1) #Activa Buzzer
+                     time.sleep(0.1)
+                     grovepi.digiralWrite(buzzer,0) #Desactiva el Buzzer
                      client.publish("buzzerSalida",1)
          	     grovepi.digitalWrite(relay,1) #Activa Relay
+		     time.sleep(0.1)
+		     grovepi.digiralWrite(relay,0)
 		     client.publish("relaySalida",1)
 		     #Hace set de los valores del sensor y actuadores para enviarlos a thingSpeak
                      sound = sensor_value
@@ -130,6 +150,31 @@ def getData():
 		     rel = 1
 		     buzz = 1
                      time.sleep(0.1)
+		     #Enviar email por deteccion de intruso 
+                     p = subprocess.Popen(["runlevel"], stdout=subprocess.PIPE)
+                     out, err=p.communicate()    # Conectar al servidor del email
+                     if out[2] == '0':
+                         print('Halt detected')
+                         exit(0)
+                     if out [2] == '6':
+                         print('Shutdown detected')
+                         exit(0)
+                     print("Conectado al email")
+
+                     # Create the container (outer) email message
+                     TO = SMTP_RECIPIENT
+                     FROM = SMTP_USERNAME
+                     TEXT =  """El dispositivo a detectado un intruso en el cuarto."""
+                     SUBJECT = """Alerta de seguridad."""
+                     msg = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+                     
+                     # Enviar email via Gmail
+                     print("Sending the mail")
+                     server = smtplib.SMTP_SSL(SMTP_SERVER, SSL_PORT)
+                     server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                     server.sendmail(FROM, [TO], msg)
+                     server.quit()
+                     print("Mail sent")
 
                   else:
     	 	       print("apagar alarma")
